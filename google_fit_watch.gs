@@ -186,6 +186,14 @@ function getData() {
   }
   // --------------------------
 
+
+  // --------------------------
+  // Unpack 1
+  //unpack1(donnes_json, sheet);
+  //var cell = sheet.getRange("H1");
+  //cell.setValue(dictt.echan_jour1);
+  // --------------------------
+
 }
 
 
@@ -257,6 +265,101 @@ function authCallback(request) {
     return HtmlService.createHtmlOutput('Denied. You can close this tab');
   }
 }
+
+
+
+// ------------------------------------------------
+// Extra functions for immediate collection of data samples: did not work
+// ------------------------------------------------
+function garde_jusqua_trigger(){
+  var finioupas = 0;
+  var nom_de_mins = 10;
+  mettez_des_jours1(nom_de_mins)
+  getData(dictt);
+  finioupas = finioupas + 1;
+}
+
+function mettez_des_jours1(nom_de_mins){
+  dictt = {};
+  var end = new Date();
+  end.setMinutes(end.getMinutes()-90);
+  
+  var start = new Date();
+  start.setDate(end.getDate());
+  start.setHours(end.getHours());
+  start.setMinutes(end.getMinutes() - nom_de_mins);
+
+  // On peut decider à quelle intervalle on veut des données!
+  var un_min = new Date();
+  un_min.setMinutes(end.getMinutes() - 10);
+  un_min.setHours(end.getHours());
+  dictt.samp_diff = end.getTime() - un_min.getTime(); // diff en milliseconds=84599999
+  // OU
+  //dictt.echan_jour = 86400000;
+  //dictt.echan_h = Math.floor(dictt.echan_jour/24);
+  //dictt.echan_30mins = Math.floor(dictt.echan_h/2);
+
+  dictt.datetime_start = start.getTime();
+  dictt.datetime_end = end.getTime();
+
+  return dictt;
+}
+
+function mettez_des_jours2(){
+  dictt = {};
+  
+  var end = new Date();
+  end.setMinutes(end.getMinutes()-90);
+  dictt.datetime_end = end.getTime();
+
+  var start = new Date();
+  //start.setMinutes(end.getDate() - 1);
+  start.setMinutes(end.getMinutes() - 1);
+  //start.setSeconds(end.getSeconds() - 1);
+  dictt.datetime_start = start.getTime(); // c'est convert le temps-stamp dans milliseconds
+
+  dictt.samp_diff = Math.floor(dictt.datetime_end - dictt.datetime_start);
+
+  return dictt;
+}
+
+function unpack1(donnes_json, sheet){
+
+  // --------------------------
+  // Unpack
+  var vec_len_des = donnes_json.bucket.length; // le length de vecteur imprimer chaque fois
+
+  var pas;
+
+  // each bucket in our response should be a day
+  // var bucketDate = new Date(parseInt(JSON.bucket[b].startTimeMillis, 10));
+  
+  // temp: genere des données, c'est des donnes health fitness de montre
+  var vec = []
+  for (var b=0; b<vec_len_des; b++){
+    if (donnes_json.bucket[b].dataset[0].point.length > 0) {
+      pas = donnes_json.bucket[b].dataset[0].point[0].value[0].intVal;
+    } else {
+      pas = NaN;
+    }
+    vec.push([pas])
+  }
+  
+  var start = vec_len_des + 1;
+  var end = start + vec_len_des - 1;
+
+  // Create a string
+  var str_start = "D"
+  var str_out = str_start.concat(start.toString(), ":D", end.toString());
+  var range = sheet.getRange(str_out);
+  
+  // Il faut sortir des données dans des increments (ie: vecteurs des 10 valeures)
+  range.setValues(vec)
+  // --------------------------
+}
+
+
+
 
 function clearProps() {
   PropertiesService.getUserProperties().deleteAllProperties();
