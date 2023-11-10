@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+  <head></head>
+  <body>
+
+    <!-- Inside the Code.gs put the following to make a webapp server -->
+    <!--function doGet() {-->
+    <!--    return HtmlService.createHtmlOutputFromFile('main_html');-->
+    <!--}-->
+
+    
+    <h1 style='text-align: center; margin-bottom: -35px;'>Prompt engineering: Sharing reliable OpenAI model prompts</h1>
+
+    <br><br>
+
+    <h3>Enter a statement, question, or announcement:</h3>
+    <!--If you select "create_questions_based_on_a_text", enter a URL like https://en.wikipedia.org/wiki/Chatbot:-->
+    <!--text = "Are you open on Halloween Day?"-->
+    <input type="text" value="" placeholder="Enter prompt here" id="text" rows="1" cols="100">
+
+    <br><br>
+
+    <h3>Input OpenAI key:</h3>
+    <input type="text" value="" placeholder="Enter OpenAI key here" id="apikey" rows="1" cols="50">
+
+    <br><br>
+
+    <!--Radio button : https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio-->
+    <!-- Giving all the buttons the same name allows one radio button to be checked at a time-->
+    <fieldset>
+      <legend>Select an OpenAI model:</legend>
+
+      <div>
+        <input type="radio" id="gpt4" name="radio_name" value="gpt4"  onclick="gfg_Run()" />
+        <label for="gpt4">gpt-4</label>
+      </div>
+
+      <div>
+        <input type="radio" id="gpt3_5turbo" name="radio_name" value="gpt3_5turbo" />
+        <label for="gpt3_5turbo">gpt-3.5-turbo</label>
+      </div>
+
+      <div>
+        <input type="radio" id="davinci002" name="radio_name" value="davinci002" />
+        <label for="davinci002">davinci-002</label>
+      </div>
+
+      <div>
+        <input type="radio" id="babbage002" name="radio_name" value="babbage002" />
+        <label for="babbage002">babbage-002</label>
+      </div>
+
+      <div>
+        <input type="radio" id="textdavinci003" name="radio_name" value="textdavinci003" />
+        <label for="textdavinci003">text-davinci-003</label>
+      </div>
+    </fieldset>
+
+    <br>
+
+    <!--Drop down menu-->
+     <label for="prompt_topics">Select a desired prompt topic example, to view best results:</label>
+      <select name="prompt_topic_list" id="prompt_topic_list">
+        <option value="sentiment">sentiment</option>
+        <option value="zeroshot">zeroshot</option>
+        <option value="named_entity_recognition0">named_entity_recognition0</option>
+        <option value="named_entity_recognition1">named_entity_recognition1</option>
+        <option value="summarize">summarize</option>
+        <option value="translate">translate</option>
+        <option value="missing_wordORfillmask">missing_wordORfillmask</option>
+        <option value="dataset_creation0">dataset_creation0</option>
+        <option value="dataset_creation1">dataset_creation1</option>
+        <option value="transform_question_into_a_statement">transform_question_into_a_statement</option>
+      </select> 
+
+      <br><br>
+
+      <button id="myBtn" onclick="myFunction()">Run Selection</button>
+      
+      <br><br>
+      
+      <!--https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea-->
+      <label id="outData_label" style="display:none">Reliable prompt example</label>
+      <br>
+      <textarea id="outData" rows="4" cols="100" placeholder="Reliable prompt example" style="display:none"></textarea>
+      <br>
+
+      <textarea id="outData2" rows="2" cols="70" placeholder="notification" style="display:none"></textarea>
+      <br>
+
+      <label id="outData3_label" style="display:none">User selections and model response</label>
+      <br>
+      <textarea id="outData3" rows="4" cols="100" placeholder="User selections and model response" style="display:none"></textarea>
+      <!--<br>-->
+      <!--<textarea id="Errorout" rows="4" cols="100" placeholder="Errors"></textarea>-->
+     
+
+    <style type="text/css">textarea#outData {
+      background-color: #b8d6ba;
+      border: 0.5px grey;
+      -webkit-border-radius: 5px;
+      -moz-border-radius: 5px;
+      border-radius: 5px;}</style>
+
+    <style type="text/css">textarea#outData2 {
+      background-color: #b8c0d6;
+      border: 0.5px grey;
+      -webkit-border-radius: 5px;
+      -moz-border-radius: 5px;
+      border-radius: 5px;}</style>
+    
+    <style type="text/css">textarea#outData3 {
+      background-color: #b8d6ba;
+      border: 0.5px grey;
+      -webkit-border-radius: 5px;
+      -moz-border-radius: 5px;
+      border-radius: 5px;}</style>
+
+    <style type="text/css">label {
+      font-size: 1em;
+      font-weight: bold;
+      font-family: Verdana, Arial, Helvetica, sans-serif;}
+    </style>
+
+    <script>
+    // -----------------------------------
+
+    async function myFunction() {
+
+      const text = document.getElementById("text").value;
+      const OPENAI_API_KEY = document.getElementById("apikey").value;
+
+      // Determine the model
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/if...else
+      const gpt4 = document.getElementById("gpt4").checked;
+      const gpt3_5turbo = document.getElementById("gpt3_5turbo").checked;
+      const davinci002 = document.getElementById("davinci002").checked;
+      const babbage002 = document.getElementById("babbage002").checked;
+      const textdavinci003 = document.getElementById("textdavinci003").checked;
+
+      if (gpt4 == true && gpt3_5turbo == false && davinci002 == false && babbage002 == false && textdavinci003 == false) {
+        var model_name = 'gpt-4'
+      }
+      if (gpt4 == false && gpt3_5turbo == true && davinci002 == false && babbage002 == false && textdavinci003 == false) {
+        var model_name = 'gpt-3.5-turbo'
+      }
+      if (gpt4 == false && gpt3_5turbo == false && davinci002 == true && babbage002 == false && textdavinci003 == false) {
+        var model_name = 'davinci-002'
+      }
+      if (gpt4 == false && gpt3_5turbo == false && davinci002 == false && babbage002 == true && textdavinci003 == false) {
+        var model_name = 'babbage-002'
+      }
+      if (gpt4 == false && gpt3_5turbo == false && davinci002 == false && babbage002 == false && textdavinci003 == true) {
+        var model_name = 'text-davinci-003'
+      }
+      
+
+      // Get the prompt
+      var prompt_topic = document.getElementById("prompt_topic_list").value;
+
+      var extra = ``
+
+      if (prompt_topic == 'sentiment') {
+        var prompt = `Identify the sentiment of the following text ${text}, output only a number from 1 to -1 where 1 means positive and -1 means negative. Use the least number of words.`
+        
+        var prompt_str = `Identify the sentiment of the following text {text}, output only a number from 1 to -1 where 1 means positive and -1 means negative. Use the least number of words.`
+      } else if (prompt_topic == 'zeroshot') {
+        var category0 = "statement"
+        var category1 = "question"
+        var category2 = "announcement"
+        
+        var prompt = `Classify the following text ${text} as one of the categories: ${category0}, ${category1}, ${category2}. Use the least number of words.`
+
+        var prompt_str = `Classify the following text {text} as one of the categories: {category0}, {category1}, {category2}. Use the least number of words.`
+
+      } else if (prompt_topic == 'named_entity_recognition0') {
+        var prompt = `Perform named entity recognition on the following text ${text} and identify a location, date, or person. If no location, date, or person is found say nothing found.`
+          
+        var prompt_str = `Perform named entity recognition on the following text {text} and identify a location, date, or person. If no location, date, or person is found say nothing found.`
+
+      } else if (prompt_topic == 'named_entity_recognition1') {
+        var feature0 = "location"
+        var feature1 = "date"
+        var description0 = "location information"
+        var description1 = "date information"
+        var information_query = `perform named entity recognition`
+          
+        var prompt = `Given the following text ${text}, identify: ${feature0}: ${description0}, ${feature1}: ${description1}. Format the output as JSON with the following keys: ${feature0}, ${feature1}`
+          
+        var prompt_str = `Given the following text {text}, identify: {feature0}: {description0}, {feature1}: {description1}. Format the output as JSON with the following keys: {feature0}, {feature1}`
+
+      } else if (prompt_topic == 'summarize') {
+        var prompt = `Summarize the following text ${text}`
+
+        var prompt_str = `Summarize the following text {text}`
+
+      } else if (prompt_topic == 'translate') {
+        var language = "french"
+        var prompt = `Translate the following text ${text} to ${language} language`
+
+        var prompt_str = `Translate the following text {text} to {language} language`
+
+      } else if (prompt_topic == 'missing_wordORfillmask') {
+        var out = text.split(" ")
+        var position = Math.round(Math.random() * out.length);
+        out[position] = '[mask]'
+        var text_missing_word = out.join(' ')
+
+        var prompt = `Given following text ${text_missing_word}, what is the most logical word for [mask] that completes the phrase. Return the completed phrase with the [mask] word filled in, use the least number of words.`
+          
+        var prompt_str = `Given following text {text_missing_word}, what is the most logical word for [mask] that completes the phrase. Return the completed phrase with the [mask] word filled in, use the least number of words.`
+
+      } else if (prompt_topic == 'dataset_creation0') {
+        // OpenAI example (https://platform.openai.com/examples): 
+        var information_query = "10 AI model names that were released"
+        var feature1 = "company"
+          
+        var extra = `Created a scenario: information_query = ${information_query}, feature1 = ${feature1}`
+      
+        var prompt = `Create a two-column CSV of ${information_query} along with the ${feature1}.`
+
+        var prompt_str = `Create a two-column CSV of {information_query} along with the {feature1}.`
+
+      } else if (prompt_topic == 'dataset_creation1') {
+        var from_year = 2022
+        var to_year = 2023
+        var feature0 = "model_name"
+        var description0 = `AI model name`
+        var feature1 = "company"
+        var description1 = `Company name that created the model`
+        var information_query = `List 10 AI models that were released`
+          
+        var extra = `Created a scenario: information_query = ${information_query}, feature0 = ${feature0}, description0 = ${description0}, feature1 = ${feature1}, description1 = ${description1}.`
+          
+        var prompt = `Given the following text ${information_query}, identify: ${feature0}: ${description0}, ${feature1}: ${description1}. Format the output as JSON with the following keys: ${feature0}, ${feature1}`
+
+        var prompt_str = `Given the following text {information_query}, identify: {feature0}: {description0}, {feature1}: {description1}. Format the output as JSON with the following keys: {feature0}, {feature1}`
+
+      } else if (prompt_topic == 'transform_question_into_a_statement') {
+        var prompt = `Write the following question ${text} as a statement, start with The user would like to know`
+          
+        var prompt_str = `Write the following question {text} as a statement, start with The user would like to know`
+     
+      } else {
+        var prompt = `No selection`
+        var prompt_str = `No selection`
+      } 
+
+      
+      var temperature = 0
+
+      // -------------------------------------
+      
+      // Unhide the textarea
+      var outDatalabel_textarea = document.getElementById("outData_label");
+      outDatalabel_textarea.style.display = "block";
+      outDatalabel_textarea.readOnly=true;
+      outDatalabel_textarea.className ='show';
+      var outData_textarea = document.getElementById("outData");
+      outData_textarea.style.display = "block";
+      outData_textarea.readOnly=true;
+      outData_textarea.className ='show';
+
+      document.getElementById("outData").innerHTML = prompt_str
+
+      // -------------------------------------
+
+      // Unhide the notification textarea
+      var outData2_textarea = document.getElementById("outData2");
+      outData2_textarea.style.display = "block";
+      outData2_textarea.readOnly=true;
+      outData2_textarea.className ='show';
+
+      document.getElementById("outData2").innerHTML = `${extra} Running OpenAI model selection!! 👋`
+
+      // -------------------------------------
+
+      // Call the model
+      if (model_name == 'gpt-4' || model_name == 'gpt-3.5-turbo')  {
+        // ------------------------------------------
+        var system_content = "You are a helpful assistant"
+        var assistant_content = "Respond concisely"
+        var messages = [{"role": "system", "content": system_content}, {"role": "user", "content": prompt}, {"role": "assistant", "content": assistant_content}];
+        var data = {"model": model_name, 'messages': messages, 'temperature': temperature};
+        var url = 'https://api.openai.com/v1/chat/completions'
+        var headers = {"Content-Type": "application/json", "Authorization": 'Bearer ' + OPENAI_API_KEY}
+        var options = {method : 'post', headers: headers, body : JSON.stringify(data)};
+        // ------------------------------------------
+        try {
+          // Unhide the textarea
+          var outData3label_textarea = document.getElementById("outData3_label");
+          outData3label_textarea.style.display = "block";
+          outData3label_textarea.readOnly=true;
+          outData3label_textarea.className ='show';
+          var outData3_textarea = document.getElementById("outData3");
+          outData3_textarea.style.display = "block";
+          outData3_textarea.readOnly=true;
+          outData3_textarea.className ='show';
+          
+          // Print full JSON response
+          // const text_out = await fetch(url, options).then(res => res.json()).then(res => {document.getElementById("outData3").innerHTML = JSON.stringify(res); return JSON.stringify(res)})
+          //
+          // Print text part of JSON response only
+          // const text_out = await fetch(url, options).then(res => res.json()).then(res => {document.getElementById("outData3").innerHTML = JSON.parse(JSON.stringify(res))['choices'][0]['message']['content']; return JSON.parse(JSON.stringify(res))['choices'][0]['message']['content']})
+          //
+          // Print text part of JSON response only with user message
+          const text_out = await fetch(url, options).then(res => res.json()).then(res => {document.getElementById("outData3").innerHTML = `The OpenAI model ${model_name} response is : ${JSON.parse(JSON.stringify(res))['choices'][0]['message']['content']}`; return JSON.parse(JSON.stringify(res))['choices'][0]['message']['content']})
+        } 
+        catch (error) 
+        {
+          document.getElementById("Errorout").innerHTML = error;
+        }
+        
+      }
+      else {
+        // ------------------------------------------
+        var data = {'model': model_name, 'prompt': prompt, 'max_tokens': 20, 'temperature': temperature};
+        var url = "https://api.openai.com/v1/completions"
+        var headers = {"Content-Type": "application/json", "Authorization": 'Bearer ' + OPENAI_API_KEY}
+        var options = {method : 'post', headers: headers, body : JSON.stringify(data)};
+        // ------------------------------------------
+        try {
+          // Unhide the textarea
+          var outData3label_textarea = document.getElementById("outData3_label");
+          outData3label_textarea.style.display = "block";
+          outData3label_textarea.readOnly=true;
+          outData3label_textarea.className ='show';
+          var outData3_textarea = document.getElementById("outData3");
+          outData3_textarea.style.display = "block";
+          outData3_textarea.readOnly=true;
+          outData3_textarea.className ='show';
+          
+          // Print full JSON response
+          // const text_out = await fetch(url, options).then(res => res.json()).then(res => {document.getElementById("outData3").innerHTML = JSON.stringify(res); return JSON.stringify(res)})
+          //
+          // Print text part of JSON response only
+          // const text_out = await fetch(url, options).then(res => res.json()).then(res => {document.getElementById("outData3").innerHTML = JSON.parse(JSON.stringify(res))['choices'][0]['text']; return JSON.parse(JSON.stringify(res))['choices'][0]['text']})
+          //
+          // Print text part of JSON response only with user message
+          const text_out = await fetch(url, options).then(res => res.json()).then(res => {document.getElementById("outData3").innerHTML = `The OpenAI model ${model_name} response is : ${JSON.parse(JSON.stringify(res))['choices'][0]['text']}`; return JSON.parse(JSON.stringify(res))['choices'][0]['text']})
+        } 
+        catch (error) 
+        {
+          document.getElementById("Errorout").innerHTML = error;
+        }
+      }
+      
+
+      
+      
+    } // end of async function myFunction()
+
+    // -----------------------------------
+
+
+    // -----------------------------------
+
+
+    // -----------------------------------
+
+
+    // -----------------------------------
+
+  </script>
+  </body>
+</html>
