@@ -1,0 +1,347 @@
+// Inside the Code.gs put the following to make a webapp server
+function doGet(e) {
+  return HtmlService.createHtmlOutputFromFile('index');
+}
+
+
+async function print_scrape_text(URL) {
+
+  // GET fetch REST API
+  var response = UrlFetchApp.fetch(URL);
+  
+  // Obtain the html page: it is a lot of text so it is necessary to output only certain parts of the HTML page
+  const pageHTML = response.getContentText();
+  
+
+  // ----------------------------------------------------
+  var which_way = 'Cheerio';
+
+  if (which_way == 'Cheerio') {
+    const $ = Cheerio.load(pageHTML);  
+
+    // Obtain the title of Html page
+    var output_title = $('title').text()
+    // console.log('output_title : ', output_title)
+    
+    // Obtain all the paragraphs 
+    var output_paragraphs = $('p').text()
+    // console.log('output_paragraphs : ', output_paragraphs)
+    
+    // Obtain the first paragraph
+    var out = output_paragraphs.split("\n")
+    var nonempty_vec = []
+    for (var i=0; i < out.length; i++){
+      if (out[i].length != 0) {
+        nonempty_vec.push(out[i])
+      }
+    }
+    var first_paragraph = nonempty_vec[0]
+    // console.log('first_paragraph: ', first_paragraph)
+
+  } else {
+    var first_paragraph = 'Enter a javascript parser'
+
+  }
+  // ----------------------------------------------------
+    
+  
+  return first_paragraph
+}
+// ----------------------------------------------------
+
+      
+
+      
+<!doctype html>
+<html>
+  <head></head>
+  <body>
+
+    <!-- HTML -->
+    <h1>Pyodide and JavaScript web-scrapping Webapp</h1>
+
+    <p>[Step 0] Obtain text: </p>
+    <!--Radio button : https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio-->
+    <!-- Giving all the buttons the same name ("radio_name") allows one radio button to be checked at a time-->
+    <fieldset>
+      <legend>Select an input text option:</legend>
+
+      <div>
+        <input type="radio" id="personal_input_text" name="radio_name" value="personal_input_text" onclick="run_regex_selection()" />
+        <label for="personal_input_text">Personal input text</label>
+      </div>
+
+      <div>
+        <input type="radio" id="webscrapped_text" name="radio_name" value="webscrapped_text" onclick="run_webscrappedtext()" />
+        <label for="webscrapped_text">Webscrapped text</label>
+      </div>
+    </fieldset>
+
+    <br>
+
+    <label id="outDatalabel_textinput" style="display:none">Input your personal text data OR URL to webscrape the first paragraph:</label>
+    <br>
+    <input type="text" value="" id="outData_textinput" rows="1" cols="300" placeholder="Input text OR webscrape URL" style="display:none">&nbsp;&nbsp;<button id="webscrape_button" style="display:none" onclick="run_webscrappedtext_buttonpushed()">Webscrape</button>
+
+    <br>
+
+    <label id="outData2label_textinput" style="display:none">Copy paste the given text examples (Webscrapped or Code) into the textinput window, and then select a Regex example to see ideal Regex patterns:</label>
+    
+    <br>
+    
+    <!-- textarea -->
+    <textarea id="outData2_textarea" rows="4" cols="100" placeholder="Webscrapped output" style="display:none"></textarea>
+    
+    <br>
+
+    <label id="outData3label_textinput" style="display:none">Example of HTML Code to use with Regex examples below: </label>
+
+    <br>
+
+    <textarea id="outData3_textarea" rows="10" cols="100" placeholder="Code output" style="display:none"></textarea>
+
+    <br>
+
+    <!-- textinput -->
+    <input type="text" value="" id="outData2_textinput" rows="4" cols="300" placeholder="Insert Text to treat with Regex" style="display:none">
+
+    <br>
+    
+    <input type="text" value="" id="user_input" rows="1" cols="300" placeholder="keyword/characters" style="display:none">
+
+    <br>
+
+    <!--Drop down menu-->
+    <label id="regex_topic_list_label" style="display:none" for="dropdown_run">[Step 1] Select a desired regex example:</label>
+    <select name="regex_topic_list" id="regex_topic_list" style="display:none">
+      <option value="keyword_search">Search for keywords in text</option>
+      <option value="search_numbers">Search for numbers in text: use a multiple regex expression format</option>
+      <option value="search_text_between_2strings">Search for text between a start and end text string (ie: start_text_tag end_text_tag in the keyword/characters field)</option>
+    </select>
+
+    <br>
+
+    <button id="run_pyodide_button" onclick="evaluatePython()" style="display:none">Run</button>
+
+    <br>
+
+    <textarea id="out_python_code_str" rows="4" cols="100" placeholder="Ideal Python regex code string" style="display:none"></textarea>
+
+    <br>
+
+    <textarea id="output" rows="4" cols="100" placeholder="Python output" style="display:none"></textarea>
+
+
+
+
+
+    <!-- JAVASCRIPT -->
+    <script src="https://cdn.jsdelivr.net/pyodide/dev/full/pyodide.js"></script>
+
+    <script>
+      // ------------------------
+
+      function run_make_1sttextarea_appear() {
+        // if pushed textarea appears for user to input text
+        var outDatalabel_textinput = document.getElementById("outDatalabel_textinput");
+        outDatalabel_textinput.style.display = "block";
+        outDatalabel_textinput.readOnly=true;
+        outDatalabel_textinput.className ='show';
+
+        var outData_textinput = document.getElementById("outData_textinput");
+        outData_textinput.style.display = "block";
+        outData_textinput.className ='show';
+      }  // end of run_make_1sttextarea_appear
+
+
+
+      function run_regex_selection(){
+        
+        // Make textinput appear
+        var outData2_textinput = document.getElementById("outData2_textinput");
+        outData2_textinput.style.display = "block";
+        outData2_textinput.className ='show';
+
+        var outData3label_textinput = document.getElementById("outData3label_textinput");
+        outData3label_textinput.style.display = "block";
+        outData3label_textinput.className ='show';
+
+        var outData3_textarea = document.getElementById("outData3_textarea");
+        outData3_textarea.style.display = "block";
+        outData3_textarea.className ='show';
+
+        // Give an html example text
+        var html_code = `<!doctype html>
+<html><head></head>
+  <body>
+  <!-- HTML -->
+  <h1>Pyodide and JavaScript web-scrapping Webapp</h1><p>[Step 0] Obtain text: </p>
+  <!-- JAVASCRIPT -->
+  <script>// Comment\n<\/script>
+  </body>
+</html>`;
+        document.getElementById("outData3_textarea").innerHTML = html_code
+        
+        // Make regex dropdown label appear
+        var regex_topic_list_label = document.getElementById("regex_topic_list_label");
+        regex_topic_list_label.style.display = "block";
+        regex_topic_list_label.className ='show';
+
+        // Make regex dropdown selection menu appear
+        var regex_topic_list = document.getElementById("regex_topic_list");
+        regex_topic_list.style.display = "block";
+        regex_topic_list.className ='show';
+
+        // Make user_input textinput appear
+        var user_input = document.getElementById("user_input");
+        user_input.style.display = "block";
+        user_input.className ='show';
+
+        // Make Run Pyodide button appear
+        var run_pyodide_button = document.getElementById("run_pyodide_button");
+        run_pyodide_button.style.display = "block";
+        run_pyodide_button.className ='show';
+      }
+      // ------------------------
+
+      function run_webscrappedtext(){
+        // if pushed, [textarea and button] appears for user to input a URL and push the button to webscrape from the URL
+
+        run_make_1sttextarea_appear()
+        
+        // Make the button appear
+        var webscrape_button = document.getElementById("webscrape_button");
+        webscrape_button.style.display = "block";
+        webscrape_button.className ='show';
+
+      }  // end of run_webscrappedtext
+
+      // ------------------------
+
+      async function run_webscrappedtext_buttonpushed(){
+
+        // Webscrape the URL
+        // Test : https://en.wikipedia.org/wiki/Chatbot
+        var URL = document.getElementById("outData_textinput").value;
+
+        // Make the output webscrape textarea appear
+        var outData2_textarea = document.getElementById("outData2_textarea");
+        outData2_textarea.style.display = "block";
+        outData2_textarea.readOnly=true;
+        outData2_textarea.className ='show';
+
+        // Run webscrapper
+        try {
+
+          // Print webscrapped first paragraph
+          // Google Script Code Implementation
+          vec = [];
+          var out = await google.script.run.withSuccessHandler(function(result){document.getElementById("outData2_textarea").innerHTML = result; vec.push(result); return result}).print_scrape_text(URL);
+          
+
+          // Make the next instruction visible: Tell user to modify scrapped text or leave it as is
+          var outData2label_textinput = document.getElementById("outData2label_textinput");
+          outData2label_textinput.style.display = "block";
+          outData2label_textinput.className ='show';
+
+          run_regex_selection()
+
+        } catch (error){
+          document.getElementById("errorOut").innerHTML = error
+        }
+      }  // end of run_webscrappedtext_buttonpushed
+
+      // ------------------------
+
+      function output_results(s) {
+        output.value = s
+      }
+      
+      // ------------------------
+
+      // init Pyodide
+      async function main() {
+        let pyodide = await loadPyodide();
+        await pyodide.loadPackage(["regex"]);
+        await pyodide.loadPackage(["numpy"]);
+        return pyodide;
+      }
+
+      // ------------------------
+
+      let pyodideReadyPromise = main();
+
+      // ------------------------
+
+      async function evaluatePython() {
+
+        let pyodide = await pyodideReadyPromise;
+
+        const text = document.getElementById("outData2_textinput").value;
+        const user_input = document.getElementById("user_input").value;
+
+        // Get the regex selection
+        var regex_topic = document.getElementById("regex_topic_list").value;
+
+
+        // Steps for how to make code_expression strings:
+        // 0. write code in python
+        // 1. put double quotes around all parts of code except [input variables]
+        // 2. replace each [input_variable] with +`"${input_variable}"`+
+
+        if (regex_topic == 'keyword_search') {
+          
+          // Pyodide can not output iterated matches, it can only output the first match
+          // ***** maybe I need a better regex search to have it iterate in the browser, it iterates in python *****
+          var pyodide_browser_code = "import regex; re_expression=f'.*{"+`"${user_input}"`+"}[a-zA-Z.\\s]+'; list(regex.finditer(re_expression, f'{"+`"${text}"`+"}'))"
+          // OR give the same result
+          // var pyodide_browser_code = "import regex; list(regex.finditer(f'.*{"+`"${user_input}"`+"}[a-zA-Z.\\s]+', f'{"+`"${text}"`+"}'))"
+          
+          var python_code_str = `import regex; re_expression=f'.*{user_input}[a-zA-Z.\\s]+'; list(regex.finditer(re_expression, f'{text}'))`
+
+        } else if (regex_topic == 'search_numbers') {
+
+          var pyodide_browser_code = "import regex; list(regex.finditer('\\d+|(\\d.*?\\d\\s)|(\\s\\d.*?\\d\\n)',"+`"${text}"`+"))"
+
+          var python_code_str = `import regex; re_expression = '\\d+|(\\d.*?\\d\\s)|(\\s\\d.*?\\d\\n)'; list(regex.finditer(re_expression, text))`
+
+        } else if (regex_topic == 'search_text_between_2strings') {
+          
+          // User should input text with space between start and end text: (ie: text = '<p> </p>')
+          var pyodide_browser_code = "out = "+`"${user_input}"`+".split(' '); start_str = out[0]; end_str = out[1]; import regex; list(regex.finditer(f'({start_str}.*?{end_str})', "+`"${text}"`+"))"
+
+          var python_code_str = "out = text.split(' '); start_str = out[0]; end_str = out[1]; import regex; list(regex.finditer(f'({start_str}.*?{end_str})', html))"
+
+        } else {
+          var pyodide_browser_code = ''
+          var python_code_str =''
+        }
+
+
+        // Print ideal regex code string 
+        // Make output textarea appear
+        var outData_python_code_str = document.getElementById("out_python_code_str");
+        outData_python_code_str.style.display = "block";
+        outData_python_code_str.readOnly=true;
+        outData_python_code_str.className ='show';
+        document.getElementById("out_python_code_str").innerHTML = python_code_str
+
+        try {
+          // Make output textarea appear
+          var output_textarea = document.getElementById("output");
+          output_textarea.style.display = "block";
+          output_textarea.className ='show';
+          
+          let output = pyodide.runPython(pyodide_browser_code)
+          
+          output_results(output);
+
+        } catch (err) {
+          output_results(err);
+        }
+      }
+
+      
+    </script>
+  </body>
+</html>
